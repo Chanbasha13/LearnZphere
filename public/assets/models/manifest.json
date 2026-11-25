@@ -1,0 +1,509 @@
+{
+  "generatedAt": "2026-11-25T22:06:13.187Z",
+  "generator": "scripts/buildKluGlbAssets.mjs (Three.js GLTFExporter binary .glb w/ mergeVertices)",
+  "stageStatus": "Stage C Complete Campus Architectural GLBs (24 KLU structures + 1 residential prototype)",
+  "totalBytes": 27036664,
+  "totalMB": 25.78,
+  "assets": [
+    {
+      "id": "central-library",
+      "file": "/assets/models/central_library.glb",
+      "bytes": 1093052,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 14,
+          "vertices": 17112,
+          "triangles": 10060
+        },
+        "LOD1_Medium": {
+          "meshes": 13,
+          "vertices": 5068,
+          "triangles": 3120
+        }
+      }
+    },
+    {
+      "id": "c-block",
+      "file": "/assets/models/c_block.glb",
+      "bytes": 3824332,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 10,
+          "vertices": 64304,
+          "triangles": 34464
+        },
+        "LOD1_Medium": {
+          "meshes": 7,
+          "vertices": 16236,
+          "triangles": 8204
+        }
+      }
+    },
+    {
+      "id": "fed-block",
+      "file": "/assets/models/fed_block.glb",
+      "bytes": 3648368,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 10,
+          "vertices": 60866,
+          "triangles": 32840
+        },
+        "LOD1_Medium": {
+          "meshes": 7,
+          "vertices": 15918,
+          "triangles": 8048
+        }
+      }
+    },
+    {
+      "id": "rnd-block",
+      "file": "/assets/models/rnd_block.glb",
+      "bytes": 1602660,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 13,
+          "vertices": 19304,
+          "triangles": 10064
+        },
+        "LOD1_Medium": {
+          "meshes": 12,
+          "vertices": 13948,
+          "triangles": 7244
+        }
+      }
+    },
+    {
+      "id": "sdc-block",
+      "file": "/assets/models/sdc_block.glb",
+      "bytes": 1282524,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 7,
+          "vertices": 16114,
+          "triangles": 8156
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 10758,
+          "triangles": 5432
+        }
+      }
+    },
+    {
+      "id": "arts-block",
+      "file": "/assets/models/arts_block.glb",
+      "bytes": 1256392,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 10,
+          "vertices": 20868,
+          "triangles": 11268
+        },
+        "LOD1_Medium": {
+          "meshes": 7,
+          "vertices": 5232,
+          "triangles": 2648
+        }
+      }
+    },
+    {
+      "id": "m-block",
+      "file": "/assets/models/m_block.glb",
+      "bytes": 1944812,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 10,
+          "vertices": 33980,
+          "triangles": 18376
+        },
+        "LOD1_Medium": {
+          "meshes": 7,
+          "vertices": 6696,
+          "triangles": 3388
+        }
+      }
+    },
+    {
+      "id": "skc-block",
+      "file": "/assets/models/skc_block.glb",
+      "bytes": 915864,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 8,
+          "vertices": 16124,
+          "triangles": 8660
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 2856,
+          "triangles": 1436
+        }
+      }
+    },
+    {
+      "id": "mech-labs",
+      "file": "/assets/models/mech_labs.glb",
+      "bytes": 537560,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 10,
+          "vertices": 9924,
+          "triangles": 5384
+        },
+        "LOD1_Medium": {
+          "meshes": 8,
+          "vertices": 912,
+          "triangles": 464
+        }
+      }
+    },
+    {
+      "id": "se-annex-provisional",
+      "file": "/assets/models/se_annex_provisional.glb",
+      "bytes": 338092,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 6,
+          "vertices": 6004,
+          "triangles": 3296
+        },
+        "LOD1_Medium": {
+          "meshes": 5,
+          "vertices": 816,
+          "triangles": 416
+        }
+      }
+    },
+    {
+      "id": "open-air-theatre",
+      "file": "/assets/models/open_air_theatre.glb",
+      "bytes": 67068,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 6,
+          "vertices": 576,
+          "triangles": 344
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 480,
+          "triangles": 280
+        }
+      }
+    },
+    {
+      "id": "main-canteen",
+      "file": "/assets/models/main_canteen.glb",
+      "bytes": 379616,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 6,
+          "vertices": 6984,
+          "triangles": 3788
+        },
+        "LOD1_Medium": {
+          "meshes": 4,
+          "vertices": 744,
+          "triangles": 380
+        }
+      }
+    },
+    {
+      "id": "hindu-temple",
+      "file": "/assets/models/hindu_temple.glb",
+      "bytes": 66580,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 4,
+          "vertices": 623,
+          "triangles": 528
+        },
+        "LOD1_Medium": {
+          "meshes": 4,
+          "vertices": 495,
+          "triangles": 400
+        }
+      }
+    },
+    {
+      "id": "indoor-stadium",
+      "file": "/assets/models/indoor_stadium.glb",
+      "bytes": 103640,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 6,
+          "vertices": 1128,
+          "triangles": 864
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 670,
+          "triangles": 424
+        }
+      }
+    },
+    {
+      "id": "sports-complex-provisional",
+      "file": "/assets/models/sports_complex_provisional.glb",
+      "bytes": 2009040,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 7,
+          "vertices": 36324,
+          "triangles": 19488
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 5856,
+          "triangles": 2952
+        }
+      }
+    },
+    {
+      "id": "bus-stand",
+      "file": "/assets/models/bus_stand.glb",
+      "bytes": 41176,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 4,
+          "vertices": 366,
+          "triangles": 316
+        },
+        "LOD1_Medium": {
+          "meshes": 4,
+          "vertices": 240,
+          "triangles": 196
+        }
+      }
+    },
+    {
+      "id": "kgh-hostel",
+      "file": "/assets/models/kgh_hostel.glb",
+      "bytes": 1107776,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 8,
+          "vertices": 16466,
+          "triangles": 8654
+        },
+        "LOD1_Medium": {
+          "meshes": 7,
+          "vertices": 6574,
+          "triangles": 3466
+        }
+      }
+    },
+    {
+      "id": "aravali-hostel",
+      "file": "/assets/models/aravali_hostel.glb",
+      "bytes": 536284,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 7,
+          "vertices": 8404,
+          "triangles": 4312
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 2592,
+          "triangles": 1336
+        }
+      }
+    },
+    {
+      "id": "vindhya-hostel",
+      "file": "/assets/models/vindhya_hostel.glb",
+      "bytes": 527272,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 7,
+          "vertices": 8212,
+          "triangles": 4216
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 2592,
+          "triangles": 1336
+        }
+      }
+    },
+    {
+      "id": "staff-quarters",
+      "file": "/assets/models/staff_quarters.glb",
+      "bytes": 405964,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 5,
+          "vertices": 5716,
+          "triangles": 3008
+        },
+        "LOD1_Medium": {
+          "meshes": 5,
+          "vertices": 2592,
+          "triangles": 1376
+        }
+      }
+    },
+    {
+      "id": "indhu-hostel",
+      "file": "/assets/models/indhu_hostel.glb",
+      "bytes": 454924,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 7,
+          "vertices": 7012,
+          "triangles": 3600
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 2256,
+          "triangles": 1160
+        }
+      }
+    },
+    {
+      "id": "himalaya-hostel",
+      "file": "/assets/models/himalaya_hostel.glb",
+      "bytes": 1568768,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 8,
+          "vertices": 25324,
+          "triangles": 12888
+        },
+        "LOD1_Medium": {
+          "meshes": 6,
+          "vertices": 7584,
+          "triangles": 3892
+        }
+      }
+    },
+    {
+      "id": "lotus-hostel-provisional",
+      "file": "/assets/models/lotus_hostel_provisional.glb",
+      "bytes": 1335852,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 11,
+          "vertices": 20836,
+          "triangles": 10700
+        },
+        "LOD1_Medium": {
+          "meshes": 10,
+          "vertices": 6912,
+          "triangles": 3532
+        }
+      }
+    },
+    {
+      "id": "tulip-hostel",
+      "file": "/assets/models/tulip_hostel.glb",
+      "bytes": 1918896,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 8,
+          "vertices": 30100,
+          "triangles": 15344
+        },
+        "LOD1_Medium": {
+          "meshes": 7,
+          "vertices": 10224,
+          "triangles": 5200
+        }
+      }
+    },
+    {
+      "id": "vaddeswaram-house",
+      "file": "/assets/models/vaddeswaram_house.glb",
+      "bytes": 70152,
+      "provenance": "stage-c-parametric-architectural-glb",
+      "photogrammetry": false,
+      "blenderExternal": false,
+      "lodLevels": {
+        "LOD0_High": {
+          "meshes": 4,
+          "vertices": 920,
+          "triangles": 468
+        },
+        "LOD1_Medium": {
+          "meshes": 4,
+          "vertices": 320,
+          "triangles": 168
+        }
+      }
+    }
+  ]
+}

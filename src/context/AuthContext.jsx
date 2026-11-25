@@ -1,151 +1,157 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  getCurrentUser, 
-  setCurrentUser, 
-  removeCurrentUser, 
-  getAllUsers, 
-  saveUser, 
-  deleteUser, 
-  updateUserRole, 
-  initializeStorage 
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  initializeStorage,
+  getCurrentUser,
+  setCurrentUser,
+  getUsersDB,
+  registerUser,
+  updateStoredUser,
+  deleteStoredUser,
+  updateUserRole,
+  generateAvatar
 } from '../utils/storage';
-import { soundEngine } from '../utils/sound';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [allUsers, setAllUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    initializeStorage();
+    return getCurrentUser();
+  });
+  const [allUsers, setAllUsers] = useState(() => getUsersDB());
+  const loading = false;
 
   useEffect(() => {
-    initializeStorage();
-    const stored = getCurrentUser();
-    if (stored) {
-      setUser(stored);
-    }
-    setAllUsers(getAllUsers());
-    setLoading(false);
+    setUser(getCurrentUser());
+    setAllUsers(getUsersDB());
   }, []);
 
-  const refreshUsersList = () => {
-    setAllUsers(getAllUsers());
-  };
+  const refreshUsersList = useCallback(() => {
+    setAllUsers(getUsersDB());
+  }, []);
 
   const login = (email, password) => {
-    soundEngine.playClick(700);
-    const users = getAllUsers();
-    const cleanEmail = email.trim().toLowerCase();
-    const found = users.find(u => u.email.toLowerCase() === cleanEmail);
+    const db = getUsersDB();
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const found = db.find((u) => u.email.toLowerCase() === cleanEmail);
 
     if (!found) {
-      return { success: false, message: 'Account not found. Please verify your email or register.' };
+      return { success: false, message: 'No account found with this university email address.' };
     }
-    if (found.password && found.password !== password) {
-      return { success: false, message: 'Invalid credentials. Please verify your password.' };
+
+    if (found.password !== password) {
+      return { success: false, message: 'Incorrect password. Please try again.' };
     }
 
     setCurrentUser(found);
     setUser(found);
+    setAllUsers(db);
     return { success: true, user: found };
   };
 
+  // Explicit demo sign-in used solely from the Login portal
   const loginAs = (role) => {
-    soundEngine.playClick(800);
-    const users = getAllUsers();
-    const demo = users.find(u => u.role === role) || users[0];
-    setCurrentUser(demo);
-    setUser(demo);
-    return { success: true, user: demo };
+    const db = getUsersDB();
+    const target = db.find((u) => u.role === role);
+    if (target) {
+      setCurrentUser(target);
+      setUser(target);
+      setAllUsers(db);
+      return { success: true, user: target };
+    }
+    return { success: false, message: 'Demo account unavailable.' };
   };
 
   const signup = (formData) => {
-    soundEngine.playClick(650);
-    const users = getAllUsers();
-    const cleanEmail = formData.email.trim().toLowerCase();
-
-    if (users.some(u => u.email.toLowerCase() === cleanEmail)) {
-      return { success: false, message: 'An account with this email address already exists.' };
-    }
-
-    let defaultHeadline = 'LearnSphere Undergraduate Scholar';
-    let defaultAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face';
-
-    if (formData.role === 'admin') {
-      defaultHeadline = 'University Academic Administrator';
-      defaultAvatar = 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face';
-    } else if (formData.role === 'instructor') {
-      defaultHeadline = 'Adjunct Academic Lecturer';
-      defaultAvatar = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face';
-    }
-
-    const newUser = {
-      id: 'user_' + Date.now(),
-      name: formData.name.trim(),
-      email: cleanEmail,
+    const allowedRole = formData.role === 'instructor' ? 'instructor' : 'student';
+    const res = registerUser({
+      name: String(formData.name || '').trim(),
+      email: String(formData.email || '').trim(),
       password: formData.password,
-      role: formData.role || 'student',
-      headline: defaultHeadline,
-      avatar: defaultAvatar,
-      department: formData.department || 'Programming Academy',
-      joinedDate: new Date().toISOString().split('T')[0],
-      streak: 1,
-      studyHours: 0
-    };
+      role: allowedRole,
+      department: formData.department || 'Computer Science & Engineering',
+      headline:
+        allowedRole === 'instructor'
+          ? `Faculty Member • ${formData.department || 'KL University'}`
+          : `Degree Scholar • ${formData.department || 'KL University'}`,
+      avatar: generateAvatar(formData.name, allowedRole)
+    });
 
-    saveUser(newUser);
-    setCurrentUser(newUser);
-    setUser(newUser);
+    if (res.error) {
+      return { success: false, message: res.error };
+    }
+
+    setCurrentUser(res.user);
+    setUser(res.user);
     refreshUsersList();
-    return { success: true, user: newUser };
+    return { success: true, user: res.user };
+  };
+
+  const createUserAccount = (formData) => {
+    const res = registerUser({
+      name: String(formData.name || '').trim(),
+      email: String(formData.email || '').trim(),
+      password: formData.password || 'password123',
+      role: formData.role || 'student',
+      department: formData.department || 'Computer Science & Engineering',
+      headline: formData.headline || `KL University ${formData.role || 'student'} member`,
+      avatar: generateAvatar(formData.name, formData.role || 'student')
+    });
+    if (res.error) return { success: false, message: res.error };
+    refreshUsersList();
+    return { success: true, user: res.user };
   };
 
   const logout = () => {
-    soundEngine.playClick(500);
-    removeCurrentUser();
+    setCurrentUser(null);
     setUser(null);
   };
 
   const updateProfile = (fields) => {
-    if (!user) return;
-    const updated = { ...user, ...fields };
-    saveUser(updated);
-    setCurrentUser(updated);
-    setUser(updated);
-    refreshUsersList();
+    const updated = updateStoredUser(fields);
+    if (updated) {
+      setUser(updated);
+      refreshUsersList();
+    }
+    return updated;
   };
 
   const removeUserAccount = (userId) => {
-    soundEngine.playClick(400);
-    const updated = deleteUser(userId);
-    setAllUsers(updated);
+    const newDb = deleteStoredUser(userId);
+    setAllUsers(newDb);
+    return newDb;
   };
 
   const changeUserRole = (userId, newRole) => {
-    soundEngine.playClick(600);
-    const updated = updateUserRole(userId, newRole);
-    setAllUsers(updated);
+    const newDb = updateUserRole(userId, newRole);
+    setAllUsers(newDb);
     if (user && user.id === userId) {
-      setUser({ ...user, role: newRole });
+      const updatedSelf = { ...user, role: newRole };
+      setCurrentUser(updatedSelf);
+      setUser(updatedSelf);
     }
+    return newDb;
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      allUsers,
-      role: user?.role || 'guest',
-      isAuthenticated: !!user,
-      loading,
-      login,
-      loginAs,
-      signup,
-      logout,
-      updateProfile,
-      removeUserAccount,
-      changeUserRole,
-      refreshUsersList
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        allUsers,
+        role: user?.role || null,
+        isAuthenticated: Boolean(user),
+        loading,
+        login,
+        loginAs,
+        signup,
+        createUserAccount,
+        logout,
+        updateProfile,
+        removeUserAccount,
+        changeUserRole,
+        refreshUsersList
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,347 +1,497 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Compass, 
-  BookOpen, 
-  GraduationCap, 
-  FileText, 
-  Award, 
-  User, 
-  LogOut, 
-  Sun, 
-  Moon, 
-  Menu, 
-  X, 
-  ChevronDown, 
-  Sparkles, 
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Building2,
+  BookOpen,
   LayoutDashboard,
-  ShieldAlert
+  Sun,
+  Moon,
+  LogOut,
+  User as UserIcon,
+  ChevronDown,
+  Menu,
+  X,
+  Bell,
+  CheckCheck,
+  FileText,
+  GraduationCap,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { soundEngine } from '../utils/sound';
+import { useCourses } from '../context/CourseContext';
+import { formatTimeAgo } from '../utils/helpers';
 
 export default function Navbar() {
-  const { user, role, isAuthenticated, logout, loginAs } = useAuth();
+  const { user, role, isAuthenticated, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
-  const navigate = useNavigate();
+  const { notifications, unreadNotificationsCount, markNotifRead, markAllNotifsRead } = useCourses();
   const location = useLocation();
+  const navigate = useNavigate();
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
-  const isActive = (path) => location.pathname === path;
+  const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
 
-  const getDashboardPath = () => {
-    if (role === 'admin') return '/admin-dashboard';
-    if (role === 'instructor') return '/instructor-dashboard';
-    return '/student-dashboard';
-  };
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  const getRoleBadgeStyle = () => {
-    if (role === 'admin') return 'badge-rose';
-    if (role === 'instructor') return 'badge-amber';
-    return 'badge-cyan';
-  };
+  useEffect(() => {
+    setMobileMenuOpen(false);
+    setDropdownOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname, location.search]);
 
   const handleLogout = () => {
     logout();
-    setProfileDropdownOpen(false);
+    setDropdownOpen(false);
     navigate('/');
   };
 
+  const dashboardPath =
+    role === 'admin'
+      ? '/admin-dashboard'
+      : role === 'instructor'
+      ? '/instructor-dashboard'
+      : '/student-dashboard';
+
+  const navItems = isAuthenticated
+    ? role === 'admin'
+      ? [
+          { path: '/', label: 'Campus Home', icon: <Building2 size={15} /> },
+          { path: '/courses', label: 'Course Catalog', icon: <BookOpen size={15} /> },
+          { path: '/admin-dashboard', label: 'Governance Console', icon: <Shield size={15} /> }
+        ]
+      : role === 'instructor'
+      ? [
+          { path: '/', label: 'Campus Home', icon: <Building2 size={15} /> },
+          { path: '/courses', label: 'Course Catalog', icon: <BookOpen size={15} /> },
+          { path: '/instructor-dashboard', label: 'Faculty Studio', icon: <GraduationCap size={15} /> }
+        ]
+      : [
+          { path: '/', label: 'Campus Home', icon: <Building2 size={15} /> },
+          { path: '/courses', label: 'Courses', icon: <BookOpen size={15} /> },
+          { path: '/student-dashboard', label: 'Dashboard', icon: <LayoutDashboard size={15} /> },
+          { path: '/my-courses', label: 'My Courses', icon: <GraduationCap size={15} /> },
+          { path: '/assignments', label: 'Assignments', icon: <FileText size={15} /> }
+        ]
+    : [
+        { path: '/', label: 'Campus Home', icon: <Building2 size={15} /> },
+        { path: '/courses', label: 'Course Catalog', icon: <BookOpen size={15} /> }
+      ];
+
   return (
-    <nav style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      height: 'var(--navbar-height)',
-      background: 'var(--bg-glass)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: '1px solid var(--border-subtle)',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 28px'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        maxWidth: '1400px',
-        margin: '0 auto'
-      }}>
-        {/* Brand Identity */}
-        <Link 
-          to="/" 
-          onClick={() => soundEngine.playClick(800)}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-        >
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
+    <header className="ls-navbar">
+      <div className="ls-navbar-inner">
+        {/* Left: Brand Identity */}
+        <Link
+          to="/"
+          style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            color: '#07090e',
-            boxShadow: '0 0 16px rgba(56, 189, 248, 0.4)'
-          }}>
-            <Sparkles size={20} />
+            gap: '10px',
+            textDecoration: 'none',
+            flexShrink: 0
+          }}
+        >
+          <div
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '8px',
+              background: 'var(--accent-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--btn-primary-text)',
+              flexShrink: 0
+            }}
+          >
+            <Building2 size={19} />
           </div>
-          <div>
-            <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-              Learn<span style={{ color: 'var(--accent-cyan)' }}>Sphere</span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span
+              style={{
+                fontWeight: 800,
+                fontSize: '1.08rem',
+                letterSpacing: '-0.02em',
+                color: 'var(--text-primary)'
+              }}
+            >
+              LearnSphere
             </span>
-            <span style={{
-              display: 'block',
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--text-muted)'
-            }}>
-              3D University LMS
+            <span
+              style={{
+                fontSize: '0.64rem',
+                fontWeight: 700,
+                color: 'var(--accent-bronze)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.09em'
+              }}
+            >
+              KL University LMS
             </span>
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} className="desktop-nav-links">
-          <Link 
-            to="/" 
-            className={`btn btn-outline btn-sm ${isActive('/') ? 'active-nav' : ''}`}
-            style={{ 
-              border: 'none', 
-              color: isActive('/') ? 'var(--accent-cyan)' : 'var(--text-secondary)'
-            }}
-          >
-            <Compass size={16} /> 3D Campus
-          </Link>
-
-          <Link 
-            to="/courses" 
-            className={`btn btn-outline btn-sm ${isActive('/courses') ? 'active-nav' : ''}`}
-            style={{ 
-              border: 'none', 
-              color: isActive('/courses') ? 'var(--accent-cyan)' : 'var(--text-secondary)' 
-            }}
-          >
-            <BookOpen size={16} /> Course Catalog
-          </Link>
-
-          {isAuthenticated && (
-            <>
-              <Link 
-                to={getDashboardPath()} 
-                className="btn btn-outline btn-sm"
-                style={{ 
-                  border: 'none', 
-                  color: (isActive('/student-dashboard') || isActive('/instructor-dashboard') || isActive('/admin-dashboard')) 
-                    ? 'var(--accent-cyan)' 
-                    : 'var(--text-secondary)' 
+        {/* Center Navigation */}
+        <nav
+          className="desktop-nav-links"
+          aria-label="Primary Navigation"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}
+        >
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  padding: '8px 13px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: isActive ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                  background: isActive ? 'var(--bg-secondary)' : 'transparent',
+                  border: isActive ? '1px solid var(--border-subtle)' : '1px solid transparent',
+                  transition: 'all 0.15s ease'
                 }}
               >
-                {role === 'admin' ? <ShieldAlert size={16} /> : <LayoutDashboard size={16} />} Dashboard
+                {item.icon}
+                <span>{item.label}</span>
               </Link>
+            );
+          })}
+        </nav>
 
-              <Link 
-                to="/assignments" 
-                className="btn btn-outline btn-sm"
-                style={{ 
-                  border: 'none', 
-                  color: isActive('/assignments') ? 'var(--accent-cyan)' : 'var(--text-secondary)' 
-                }}
-              >
-                <FileText size={16} /> Assignments
-              </Link>
-
-              <Link 
-                to="/certificates" 
-                className="btn btn-outline btn-sm"
-                style={{ 
-                  border: 'none', 
-                  color: isActive('/certificates') ? 'var(--accent-cyan)' : 'var(--text-secondary)' 
-                }}
-              >
-                <Award size={16} /> Certificates
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Right Action Icons & Auth Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Theme Toggle Button */}
-          <button 
+        {/* Right Utilities & Auth */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          <button
+            type="button"
             onClick={toggleTheme}
-            className="btn btn-outline btn-sm"
-            style={{ padding: '8px', borderRadius: '50%', width: '36px', height: '36px' }}
-            title={`Switch to ${isDark ? 'Light' : 'Dark'} mode`}
+            className="ls-icon-btn"
+            aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={isDark ? 'Switch to Daylight Mode' : 'Switch to Dark Mode'}
           >
-            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+            {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
           {isAuthenticated ? (
-            /* User Profile Dropdown */
-            <div style={{ position: 'relative' }}>
-              <button 
-                onClick={() => setProfileDropdownOpen(prev => !prev)}
-                className="btn btn-secondary btn-sm"
-                style={{ padding: '4px 10px 4px 6px', gap: '8px', borderRadius: '999px' }}
-              >
-                <img 
-                  src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'} 
-                  alt={user?.name} 
-                  style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} 
-                />
-                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name?.split(' ')[0]}</span>
-                <span className={`badge ${getRoleBadgeStyle()}`} style={{ fontSize: '0.65rem', padding: '2px 6px' }}>
-                  {role}
-                </span>
-                <ChevronDown size={14} />
-              </button>
+            <>
+              {/* Real Notifications Bell */}
+              <div className="ls-notif-wrap" ref={notifRef}>
+                <button
+                  type="button"
+                  onClick={() => setNotifOpen((o) => !o)}
+                  className="ls-icon-btn"
+                  aria-label="Academic Notifications"
+                  aria-expanded={notifOpen}
+                >
+                  <Bell size={17} />
+                  {unreadNotificationsCount > 0 && (
+                    <span className="ls-notif-badge">{unreadNotificationsCount}</span>
+                  )}
+                </button>
 
-              {profileDropdownOpen && (
-                <div 
-                  onClick={() => setProfileDropdownOpen(false)}
+                {notifOpen && (
+                  <div className="ls-dropdown-popover" role="dialog" aria-label="Notifications">
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 14px',
+                        borderBottom: '1px solid var(--border-subtle)',
+                        background: 'var(--bg-secondary)'
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, fontSize: '0.86rem' }}>
+                        Notifications ({unreadNotificationsCount} unread)
+                      </span>
+                      {unreadNotificationsCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={markAllNotifsRead}
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            color: 'var(--accent-cyan)',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <CheckCheck size={13} /> Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                          No university notifications yet.
+                        </div>
+                      ) : (
+                        notifications.slice(0, 6).map((n) => {
+                          const isRead = (n.readBy || []).includes(user?.id);
+                          return (
+                            <button
+                              key={n.id}
+                              type="button"
+                              onClick={() => markNotifRead(n.id)}
+                              style={{
+                                width: '100%',
+                                textAlign: 'left',
+                                border: 'none',
+                                borderBottom: '1px solid var(--border-subtle)',
+                                padding: '11px 14px',
+                                background: isRead ? 'transparent' : 'var(--bg-secondary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '3px',
+                                fontFamily: 'inherit'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                  {n.title}
+                                </span>
+                                {!isRead && (
+                                  <span
+                                    style={{
+                                      width: '7px',
+                                      height: '7px',
+                                      borderRadius: '50%',
+                                      background: 'var(--accent-bronze)',
+                                      flexShrink: 0
+                                    }}
+                                  />
+                                )}
+                              </div>
+                              <span style={{ fontSize: '0.77rem', color: 'var(--text-secondary)' }}>{n.body}</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                {formatTimeAgo(n.createdAt)}
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Profile Menu Dropdown */}
+              <div style={{ position: 'relative' }} ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen((o) => !o)}
                   style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: '46px',
-                    width: '230px',
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-medium)',
-                    borderRadius: 'var(--radius-md)',
-                    boxShadow: 'var(--shadow-lg)',
-                    padding: '8px',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    zIndex: 200
+                    alignItems: 'center',
+                    gap: '9px',
+                    padding: '4px 10px 4px 5px',
+                    borderRadius: 'var(--radius-full)',
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-medium)',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit'
                   }}
                 >
-                  <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '4px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{user?.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user?.email}</div>
-                  </div>
-
-                  <Link 
-                    to={getDashboardPath()}
-                    className="sidebar-nav-item"
-                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
-                  >
-                    <LayoutDashboard size={15} /> Dashboard
-                  </Link>
-
-                  <Link 
-                    to="/profile"
-                    className="sidebar-nav-item"
-                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
-                  >
-                    <User size={15} /> My Profile
-                  </Link>
-
-                  <button 
-                    onClick={handleLogout}
-                    className="sidebar-nav-item"
-                    style={{ 
-                      padding: '8px 12px', 
-                      fontSize: '0.85rem', 
-                      color: 'var(--accent-rose)', 
-                      background: 'transparent', 
-                      border: 'none', 
-                      width: '100%', 
-                      cursor: 'pointer' 
+                  <img
+                    src={user?.avatar}
+                    alt={user?.name}
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '50%',
+                      objectFit: 'cover'
                     }}
-                  >
-                    <LogOut size={15} /> Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
+                  />
+                  <div style={{ textAlign: 'left', lineHeight: 1.2 }} className="ls-profile-name">
+                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {user?.name}
+                    </div>
+                    <div
+                      className="ls-profile-role"
+                      style={{ fontSize: '0.67rem', color: 'var(--accent-bronze)', fontWeight: 700, textTransform: 'uppercase' }}
+                    >
+                      {role}
+                    </div>
+                  </div>
+                  <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+                </button>
+
+                {dropdownOpen && (
+                  <div className="ls-dropdown-popover" style={{ width: '235px', padding: '8px' }}>
+                    <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--border-subtle)', marginBottom: '6px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.86rem' }}>{user?.name}</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{user?.email}</div>
+                    </div>
+
+                    <Link
+                      to={dashboardPath}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '9px',
+                        padding: '9px 10px',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.85rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      <LayoutDashboard size={15} /> Dashboard
+                    </Link>
+
+                    <Link
+                      to="/profile"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '9px',
+                        padding: '9px 10px',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.85rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      <UserIcon size={15} /> Profile Settings
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '9px',
+                        padding: '9px 10px',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        color: 'var(--accent-rose)',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        marginTop: '4px',
+                        borderTop: '1px solid var(--border-subtle)',
+                        fontFamily: 'inherit'
+                      }}
+                    >
+                      <LogOut size={15} /> Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
-            /* Guest Actions */
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button 
-                onClick={() => {
-                  loginAs('student');
-                  navigate('/student-dashboard');
-                }}
-                className="btn btn-outline btn-sm"
-                title="Instant Demo Student Access"
-              >
-                Demo Student
-              </button>
-              <button 
-                onClick={() => {
-                  loginAs('admin');
-                  navigate('/admin-dashboard');
-                }}
-                className="btn btn-outline btn-sm"
-                style={{ borderColor: 'rgba(244, 63, 94, 0.4)', color: 'var(--accent-rose)' }}
-                title="Instant Demo Admin Access"
-              >
-                Demo Admin
-              </button>
-              <Link to="/login" className="btn btn-secondary btn-sm">
+              <Link to="/login" data-magnetic="true" className="btn btn-outline btn-sm">
                 Log In
               </Link>
-              <Link to="/signup" className="btn btn-primary btn-sm">
-                Get Started
+              <Link to="/signup" data-magnetic="true" className="btn btn-primary btn-sm">
+                Sign Up
               </Link>
             </div>
           )}
 
-          {/* Mobile Hamburger Menu Toggle */}
-          <button 
-            className="btn btn-outline btn-sm mobile-menu-btn"
-            onClick={() => setMobileMenuOpen(prev => !prev)}
-            style={{ display: 'none', padding: '8px' }}
+          {/* Mobile Hamburger Button */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            className="mobile-menu-btn ls-icon-btn"
+            aria-label="Toggle Menu"
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Nav Drawer */}
       {mobileMenuOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 'var(--navbar-height)',
-          left: 0,
-          right: 0,
-          background: 'var(--bg-secondary)',
-          borderBottom: '1px solid var(--border-subtle)',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          zIndex: 99
-        }}>
-          <Link to="/" onClick={() => setMobileMenuOpen(false)} className="sidebar-nav-item">
-            <Compass size={18} /> 3D Campus
-          </Link>
-          <Link to="/courses" onClick={() => setMobileMenuOpen(false)} className="sidebar-nav-item">
-            <BookOpen size={18} /> Course Catalog
-          </Link>
-          {isAuthenticated && (
-            <>
-              <Link to={getDashboardPath()} onClick={() => setMobileMenuOpen(false)} className="sidebar-nav-item">
-                <LayoutDashboard size={18} /> Dashboard
+        <div
+          style={{
+            position: 'fixed',
+            top: 'var(--navbar-height)',
+            left: 0,
+            right: 0,
+            background: 'var(--bg-elevated)',
+            borderBottom: '1px solid var(--border-medium)',
+            padding: '16px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            zIndex: 99,
+            boxShadow: 'var(--shadow-lg)'
+          }}
+        >
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '11px 12px',
+                borderRadius: 'var(--radius-sm)',
+                background: location.pathname === item.path ? 'var(--bg-secondary)' : 'transparent',
+                color: location.pathname === item.path ? 'var(--accent-cyan)' : 'var(--text-primary)',
+                fontWeight: 600,
+                fontSize: '0.92rem'
+              }}
+            >
+              {item.icon} {item.label}
+            </Link>
+          ))}
+
+          {!isAuthenticated ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', paddingTop: '10px', borderTop: '1px solid var(--border-subtle)' }}>
+              <Link to="/login" className="btn btn-outline btn-sm">
+                Log In
               </Link>
-              <Link to="/assignments" onClick={() => setMobileMenuOpen(false)} className="sidebar-nav-item">
-                <FileText size={18} /> Assignments
+              <Link to="/signup" className="btn btn-primary btn-sm">
+                Sign Up
               </Link>
-              <Link to="/certificates" onClick={() => setMobileMenuOpen(false)} className="sidebar-nav-item">
-                <Award size={18} /> Certificates
-              </Link>
-            </>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="btn btn-danger btn-sm"
+              style={{ marginTop: '6px' }}
+            >
+              <LogOut size={15} /> Sign Out
+            </button>
           )}
         </div>
       )}
-    </nav>
+    </header>
   );
 }

@@ -3,9 +3,15 @@ import { getStoredItem, setStoredItem, KEYS } from '../utils/storage';
 
 const ThemeContext = createContext();
 
+const THEME_USER_SET_KEY = 'learnSphere_themeExplicit';
+
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    return getStoredItem(KEYS.THEME, 'dark'); // Default to dark for the immersive sci-fi campus
+    const hasExplicitChoice = getStoredItem(THEME_USER_SET_KEY, false);
+    if (hasExplicitChoice) {
+      return getStoredItem(KEYS.THEME, 'dark');
+    }
+    return 'dark'; // Unified architectural obsidian/midnight palette default
   });
 
   useEffect(() => {
@@ -14,6 +20,7 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
+    setStoredItem(THEME_USER_SET_KEY, true);
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 

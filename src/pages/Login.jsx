@@ -1,33 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, Eye, EyeOff, LogIn, ShieldAlert, ShieldCheck, UserCheck } from 'lucide-react';
+import { Building2, Mail, Lock, ArrowRight, AlertCircle, ShieldCheck, GraduationCap, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const { login, loginAs } = useAuth();
+  const { login, loginAs, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Destination after login if redirected from a protected route
-  const from = location.state?.from?.pathname || null;
+  const getDashboardPath = (r) =>
+    r === 'admin' ? '/admin-dashboard' : r === 'instructor' ? '/instructor-dashboard' : '/student-dashboard';
 
-  const redirectByRole = (userRole) => {
-    if (from) {
-      navigate(from, { replace: true });
-      return;
+  useEffect(() => {
+    if (isAuthenticated && role) {
+      navigate(getDashboardPath(role), { replace: true });
     }
-    if (userRole === 'admin') {
-      navigate('/admin-dashboard');
-    } else if (userRole === 'instructor') {
-      navigate('/instructor-dashboard');
-    } else {
-      navigate('/student-dashboard');
+  }, [isAuthenticated, role, navigate]);
+
+  const resolveDestination = (userRole) => {
+    const requested = location.state?.from?.pathname;
+    if (requested && !['/login', '/signup'].includes(requested)) {
+      if (requested.startsWith('/admin-dashboard') && userRole !== 'admin') return getDashboardPath(userRole);
+      if (requested.startsWith('/instructor-dashboard') && !['instructor', 'admin'].includes(userRole)) {
+        return getDashboardPath(userRole);
+      }
+      if (
+        ['/student-dashboard', '/my-courses', '/assignments', '/progress', '/certificates'].some((p) =>
+          requested.startsWith(p)
+        ) &&
+        userRole !== 'student'
+      ) {
+        return getDashboardPath(userRole);
+      }
+      return requested + (location.state?.from?.search || '');
     }
+    return getDashboardPath(userRole);
   };
 
   const handleSubmit = (e) => {
@@ -35,169 +47,188 @@ export default function Login() {
     setError('');
 
     if (!email.trim() || !password) {
-      setError('Please provide both your academic email and password.');
+      setError('Please enter your university email and password.');
       return;
     }
 
+    setLoading(true);
     const res = login(email, password);
+    setLoading(false);
+
     if (res.success) {
-      redirectByRole(res.user.role);
+      navigate(resolveDestination(res.user.role), { replace: true });
     } else {
       setError(res.message);
     }
   };
 
-  const handleDemoLogin = (role) => {
-    const res = loginAs(role);
+  const handleQuickDemo = (demoRole) => {
+    setError('');
+    const res = loginAs(demoRole);
     if (res.success) {
-      redirectByRole(res.user.role);
+      navigate(resolveDestination(res.user.role), { replace: true });
     }
   };
 
   return (
-    <div style={{
-      minHeight: 'calc(100vh - var(--navbar-height))',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      background: 'radial-gradient(circle at 50% 20%, #0d1627 0%, #06080e 80%)'
-    }}>
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '460px', padding: '36px' }}>
-        {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#07090e',
-            marginBottom: '12px'
-          }}>
-            <Sparkles size={22} />
+    <div className="auth-page-shell">
+      <div className="auth-card">
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '26px' }}>
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '10px',
+              background: 'var(--accent-primary)',
+              color: 'var(--btn-primary-text)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: '12px'
+            }}
+          >
+            <Building2 size={24} />
           </div>
-          <h1 style={{ fontSize: '1.6rem', marginBottom: '6px' }}>Portal Authentication</h1>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            Sign into your LearnSphere digital university account
-          </p>
-        </div>
 
-        {/* 3 Role Demo Fast Login Buttons */}
-        <div style={{
-          background: 'var(--bg-tertiary)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
-          padding: '14px',
-          marginBottom: '22px'
-        }}>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
-            Instant Viva Evaluation Access:
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-            <button 
-              type="button" 
-              onClick={() => handleDemoLogin('student')}
-              className="btn btn-outline btn-sm"
-              style={{ fontSize: '0.75rem', padding: '6px 4px' }}
-              title="alex@learnsphere.edu / password123"
-            >
-              <UserCheck size={12} /> Student
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleDemoLogin('instructor')}
-              className="btn btn-outline btn-sm"
-              style={{ fontSize: '0.75rem', padding: '6px 4px' }}
-              title="instructor@learnsphere.edu / password123"
-            >
-              <ShieldCheck size={12} /> Instructor
-            </button>
-            <button 
-              type="button" 
-              onClick={() => handleDemoLogin('admin')}
-              className="btn btn-outline btn-sm"
-              style={{ fontSize: '0.75rem', padding: '6px 4px', borderColor: 'rgba(244, 63, 94, 0.4)', color: 'var(--accent-rose)' }}
-              title="admin@learnsphere.edu / password123"
-            >
-              <ShieldAlert size={12} /> Admin
-            </button>
-          </div>
+          <h1 style={{ fontSize: '1.6rem', marginBottom: '6px' }}>University Portal Sign In</h1>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+            Access KL University courses, dashboards, grading tools, and credentials.
+          </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div style={{
-            padding: '12px 14px',
-            background: 'rgba(244, 63, 94, 0.15)',
-            border: '1px solid rgba(244, 63, 94, 0.3)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--accent-rose)',
-            fontSize: '0.85rem',
-            marginBottom: '18px'
-          }}>
-            {error}
+          <div
+            role="alert"
+            style={{
+              padding: '11px 14px',
+              background: 'rgba(190, 18, 60, 0.09)',
+              border: '1px solid rgba(190, 18, 60, 0.3)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--accent-rose)',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '18px'
+            }}
+          >
+            <AlertCircle size={16} />
+            <span>{error}</span>
           </div>
         )}
 
-        {/* Login Form */}
+        {/* Standard Email & Password Form */}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Academic Email Address</label>
-            <input 
-              type="email" 
-              className="form-input" 
-              placeholder="e.g. alex@learnsphere.edu or admin@learnsphere.edu"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Access Password</label>
+            <label htmlFor="login-email" className="form-label">University Email</label>
             <div style={{ position: 'relative' }}>
-              <input 
-                type={showPassword ? 'text' : 'password'} 
-                className="form-input" 
-                placeholder="Enter password (default: password123)"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                style={{ paddingRight: '40px' }}
+              <Mail
+                size={16}
+                style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
               />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(p => !p)}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  cursor: 'pointer'
-                }}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+              <input
+                id="login-email"
+                type="email"
+                className="form-input"
+                style={{ paddingLeft: '38px' }}
+                placeholder="student@learnsphere.edu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '10px' }}>
-            <LogIn size={16} /> Enter LearnSphere
+          <div className="form-group">
+            <label htmlFor="login-password" className="form-label">Password</label>
+            <div style={{ position: 'relative' }}>
+              <Lock
+                size={16}
+                style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+              />
+              <input
+                id="login-password"
+                type="password"
+                className="form-input"
+                style={{ paddingLeft: '38px' }}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" disabled={loading} className="btn btn-primary" style={{ width: '100%', padding: '12px', marginTop: '4px' }}>
+            {loading ? 'Signing in...' : 'Sign In to Portal'} <ArrowRight size={16} />
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          Don't have an academic record?{' '}
-          <Link to="/signup" style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>
-            Create Account
-          </Link>
+        {/* Quick Demo Credentials Section (Inside Auth Screen Only) */}
+        <div
+          style={{
+            marginTop: '24px',
+            paddingTop: '20px',
+            borderTop: '1px solid var(--border-subtle)'
+          }}
+        >
+          <div
+            style={{
+              fontSize: '0.73rem',
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.07em',
+              textAlign: 'center',
+              marginBottom: '10px'
+            }}
+          >
+            Demo Accounts (Password: password123)
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('student')}
+              className="btn btn-outline btn-sm"
+              title="student@learnsphere.edu / password123"
+              style={{ flexDirection: 'column', gap: '4px', padding: '9px 6px' }}
+            >
+              <GraduationCap size={15} style={{ color: 'var(--accent-cyan)' }} />
+              <span style={{ fontSize: '0.76rem' }}>Student</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('instructor')}
+              className="btn btn-outline btn-sm"
+              title="instructor@learnsphere.edu / password123"
+              style={{ flexDirection: 'column', gap: '4px', padding: '9px 6px' }}
+            >
+              <ShieldCheck size={15} style={{ color: 'var(--accent-emerald)' }} />
+              <span style={{ fontSize: '0.76rem' }}>Instructor</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('admin')}
+              className="btn btn-outline btn-sm"
+              title="admin@learnsphere.edu / password123"
+              style={{ flexDirection: 'column', gap: '4px', padding: '9px 6px' }}
+            >
+              <Shield size={15} style={{ color: 'var(--accent-bronze)' }} />
+              <span style={{ fontSize: '0.76rem' }}>Admin</span>
+            </button>
+          </div>
         </div>
+
+        {/* Registration Link */}
+        <p style={{ textAlign: 'center', fontSize: '0.86rem', color: 'var(--text-secondary)', marginTop: '22px' }}>
+          New to KL University LearnSphere?{' '}
+          <Link to="/signup" style={{ color: 'var(--accent-cyan)', fontWeight: 700 }}>
+            Create an Account
+          </Link>
+        </p>
       </div>
     </div>
   );

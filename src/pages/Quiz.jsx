@@ -1,40 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { 
-  Award, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  ArrowRight, 
-  RotateCcw, 
-  BookOpen, 
-  AlertCircle,
-  HelpCircle
-} from 'lucide-react';
+import { Award, CheckCircle2, XCircle, Clock, ArrowRight, RotateCcw } from 'lucide-react';
 import { useCourses } from '../context/CourseContext';
-import { quizData } from '../data/quizData';
+import { useAuth } from '../context/AuthContext';
 import { soundEngine } from '../utils/sound';
 
 export default function Quiz() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { getCourseById, recordQuiz } = useCourses();
+  const { getCourseById, recordQuiz, getQuizForCourse } = useCourses();
+  const { isAuthenticated } = useAuth();
 
   const course = getCourseById(id);
-  const questions = quizData[id] || quizData[1]; // fallback to quiz 1 if none
+  const questions = getQuizForCourse(id);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  const selectedAnswersRef = useRef({});
+  selectedAnswersRef.current = selectedAnswers;
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(300);
 
-  // Exam timer countdown
   useEffect(() => {
-    if (submitted) return;
+    if (submitted) return undefined;
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           handleSubmitExam();
@@ -43,9 +34,8 @@ export default function Quiz() {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
-  }, [submitted, selectedAnswers]);
+  }, [submitted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!course) {
     return (
@@ -58,20 +48,22 @@ export default function Quiz() {
     );
   }
 
-  const currentQ = questions[currentIndex];
+  const safeIndex = Math.min(Math.max(0, currentIndex), Math.max(0, questions.length - 1));
+  const currentQ = questions[safeIndex] || questions[0];
 
   const handleSelectOption = (optIdx) => {
     soundEngine.playClick(800);
-    setSelectedAnswers(prev => ({
+    setSelectedAnswers((prev) => ({
       ...prev,
       [currentIndex]: optIdx
     }));
   };
 
   const handleSubmitExam = () => {
+    const latestAnswers = selectedAnswersRef.current;
     let score = 0;
     questions.forEach((q, idx) => {
-      if (selectedAnswers[idx] === q.answer) {
+      if (latestAnswers[idx] === q.answer) {
         score += 1;
       }
     });
@@ -83,11 +75,7 @@ export default function Quiz() {
     if (res.passed) {
       soundEngine.playSuccess();
       try {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+        confetti({ particleCount: 90, spread: 68, origin: { y: 0.6 } });
       } catch {
         // Confetti fallback
       }
@@ -110,23 +98,41 @@ export default function Quiz() {
   };
 
   return (
-    <div style={{ background: 'var(--bg-primary)', minHeight: 'calc(100vh - var(--navbar-height))', padding: '40px 20px 80px' }}>
+    <div style={{ background: 'var(--bg-primary)', minHeight: 'calc(100vh - var(--navbar-height))', padding: '36px 20px 80px' }}>
       <div className="container">
-        {/* Exam Navigation Header */}
-        <div style={{ maxWidth: '760px', margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ maxWidth: '760px', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
           <Link to={`/classroom/${course.id}`} className="btn btn-outline btn-sm">
             ← Return to Classroom
           </Link>
           <span className="badge badge-cyan">{course.title} Examination</span>
         </div>
 
+        {!isAuthenticated && (
+          <div
+            style={{
+              maxWidth: '760px',
+              margin: '0 auto 16px',
+              padding: '10px 14px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-medium)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              fontSize: '0.84rem'
+            }}
+          >
+            <span>Preview mode — sign in to save examination grades to your official academic record.</span>
+            <Link to="/login" className="btn btn-primary btn-sm">Sign In</Link>
+          </div>
+        )}
+
         {!submitted ? (
-          /* Active Examination Interface */
           <div className="quiz-card-container">
-            {/* Header with question count and timer */}
             <div className="quiz-header-bar">
               <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>
                   Question {currentIndex + 1} of {questions.length}
                 </span>
                 <div style={{ fontSize: '0.85rem', color: 'var(--accent-cyan)', fontWeight: 600 }}>
@@ -134,30 +140,31 @@ export default function Quiz() {
                 </div>
               </div>
 
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 14px',
-                background: timeLeft < 60 ? 'rgba(244, 63, 94, 0.15)' : 'var(--bg-tertiary)',
-                color: timeLeft < 60 ? 'var(--accent-rose)' : 'var(--text-primary)',
-                borderRadius: '999px',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-                border: '1px solid var(--border-subtle)'
-              }}>
-                <Clock size={16} /> {formatTime(timeLeft)}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  padding: '6px 13px',
+                  background: timeLeft < 60 ? 'rgba(190, 18, 60, 0.12)' : 'var(--bg-secondary)',
+                  color: timeLeft < 60 ? 'var(--accent-rose)' : 'var(--text-primary)',
+                  borderRadius: '999px',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <Clock size={15} /> {formatTime(timeLeft)}
               </div>
             </div>
 
-            {/* Question Navigation Palette */}
             <div className="quiz-progress-palette">
               {questions.map((_, idx) => {
                 const isAnswered = selectedAnswers[idx] !== undefined;
                 const isCurr = idx === currentIndex;
-
                 return (
                   <button
+                    type="button"
                     key={idx}
                     className={`palette-dot ${isCurr ? 'current' : ''} ${isAnswered ? 'answered' : ''}`}
                     onClick={() => setCurrentIndex(idx)}
@@ -168,35 +175,35 @@ export default function Quiz() {
               })}
             </div>
 
-            {/* Question Text */}
-            <h2 className="quiz-question-text">
-              {currentQ.question}
-            </h2>
+            <h2 className="quiz-question-text">{currentQ.question}</h2>
 
-            {/* Options List */}
             <div className="quiz-options-list">
               {currentQ.options.map((option, optIdx) => {
                 const isSelected = selectedAnswers[currentIndex] === optIdx;
-
                 return (
                   <button
+                    type="button"
                     key={optIdx}
                     className={`quiz-option-btn ${isSelected ? 'selected' : ''}`}
                     onClick={() => handleSelectOption(optIdx)}
                   >
                     <span>{option}</span>
-                    <span style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '50%',
-                      border: '1px solid var(--border-medium)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.75rem',
-                      background: isSelected ? 'var(--accent-cyan)' : 'transparent',
-                      color: isSelected ? '#07090e' : 'inherit'
-                    }}>
+                    <span
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: '1px solid var(--border-medium)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        flexShrink: 0,
+                        background: isSelected ? 'var(--accent-primary)' : 'transparent',
+                        color: isSelected ? '#ffffff' : 'inherit'
+                      }}
+                    >
                       {String.fromCharCode(65 + optIdx)}
                     </span>
                   </button>
@@ -204,10 +211,10 @@ export default function Quiz() {
               })}
             </div>
 
-            {/* Footer Navigation */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '18px', borderTop: '1px solid var(--border-subtle)' }}>
-              <button 
-                onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+              <button
+                type="button"
+                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
                 disabled={currentIndex === 0}
                 className="btn btn-outline btn-sm"
               >
@@ -215,17 +222,19 @@ export default function Quiz() {
               </button>
 
               {currentIndex < questions.length - 1 ? (
-                <button 
-                  onClick={() => setCurrentIndex(prev => prev + 1)}
+                <button
+                  type="button"
+                  onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
                   className="btn btn-primary btn-sm"
                 >
                   Next Question <ArrowRight size={14} />
                 </button>
               ) : (
-                <button 
+                <button
+                  type="button"
                   onClick={handleSubmitExam}
                   className="btn btn-primary btn-sm"
-                  style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#ffffff' }}
+                  style={{ background: 'var(--accent-emerald)', borderColor: 'var(--accent-emerald)', color: '#ffffff' }}
                 >
                   Submit Examination <CheckCircle2 size={16} />
                 </button>
@@ -233,43 +242,45 @@ export default function Quiz() {
             </div>
           </div>
         ) : (
-          /* Results & Pedagogical Review Card */
           <div className="quiz-card-container">
-            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: result?.passed ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)',
-                color: result?.passed ? 'var(--accent-emerald)' : 'var(--accent-rose)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '16px'
-              }}>
-                {result?.passed ? <Award size={36} /> : <XCircle size={36} />}
+            <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+              <div
+                style={{
+                  width: '62px',
+                  height: '62px',
+                  borderRadius: '50%',
+                  background: result?.passed ? 'rgba(15, 118, 110, 0.12)' : 'rgba(190, 18, 60, 0.12)',
+                  color: result?.passed ? 'var(--accent-emerald)' : 'var(--accent-rose)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '14px'
+                }}
+              >
+                {result?.passed ? <Award size={32} /> : <XCircle size={32} />}
               </div>
 
-              <span className={`badge ${result?.passed ? 'badge-emerald' : 'badge-rose'}`} style={{ fontSize: '0.85rem', marginBottom: '8px' }}>
-                {result?.passed ? 'Academic Certification Granted' : 'Retake Required (Threshold: 60%)'}
-              </span>
+              <div>
+                <span className={`badge ${result?.passed ? 'badge-emerald' : 'badge-rose'}`} style={{ marginBottom: '8px' }}>
+                  {result?.passed ? 'Academic Certification Granted' : 'Retake Required (Threshold: 60%)'}
+                </span>
+              </div>
 
-              <h1 style={{ fontSize: '2.2rem', margin: '8px 0' }}>
+              <h1 style={{ fontSize: '2.05rem', margin: '8px 0' }}>
                 {result?.score} / {result?.total} Correct ({result?.percentage}%)
               </h1>
 
               <p style={{ color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto' }}>
-                {result?.passed 
-                  ? 'Congratulations! You have demonstrated academic mastery of the curriculum standards.'
-                  : 'You did not achieve the required 60% passing mark. Review the explanations below and re-attempt.'}
+                {result?.passed
+                  ? 'You have satisfied the examination threshold for this curriculum track.'
+                  : 'Review the explanations below and retake when ready.'}
               </p>
 
-              {/* Next Step Action Buttons */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '24px' }}>
-                <button onClick={handleRetake} className="btn btn-outline btn-sm">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginTop: '22px', flexWrap: 'wrap' }}>
+                <button type="button" onClick={handleRetake} className="btn btn-outline btn-sm">
                   <RotateCcw size={14} /> Retake Examination
                 </button>
-                {result?.passed && (
+                {result?.passed && isAuthenticated && (
                   <Link to="/certificates" className="btn btn-primary btn-sm">
                     <Award size={14} /> View Official Degree Certificate
                   </Link>
@@ -277,58 +288,41 @@ export default function Quiz() {
               </div>
             </div>
 
-            {/* Question Breakdown with Explanations */}
-            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '24px' }}>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '18px' }}>
-                Pedagogical Examination Review
-              </h3>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '22px' }}>
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '16px' }}>Question Review</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {questions.map((q, idx) => {
                   const userAns = selectedAnswers[idx];
                   const isCorrect = userAns === q.answer;
-
                   return (
-                    <div 
+                    <div
                       key={idx}
                       style={{
-                        padding: '18px',
-                        background: 'var(--bg-tertiary)',
-                        border: `1px solid ${isCorrect ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)'}`,
-                        borderRadius: 'var(--radius-md)'
+                        padding: '16px',
+                        background: 'var(--bg-secondary)',
+                        border: `1px solid ${isCorrect ? 'rgba(15, 118, 110, 0.35)' : 'rgba(190, 18, 60, 0.35)'}`,
+                        borderRadius: 'var(--radius-sm)'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>
-                          Question {idx + 1}: {q.question}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '6px', gap: '8px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.93rem' }}>
+                          Q{idx + 1}: {q.question}
                         </span>
-                        {isCorrect ? (
-                          <span style={{ color: 'var(--accent-emerald)', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <CheckCircle2 size={14} /> Correct
-                          </span>
-                        ) : (
-                          <span style={{ color: 'var(--accent-rose)', fontSize: '0.8rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <XCircle size={14} /> Incorrect
-                          </span>
-                        )}
+                        <span style={{ color: isCorrect ? 'var(--accent-emerald)' : 'var(--accent-rose)', fontSize: '0.78rem', fontWeight: 700, flexShrink: 0 }}>
+                          {isCorrect ? 'Correct' : 'Incorrect'}
+                        </span>
                       </div>
-
-                      <div style={{ fontSize: '0.85rem', marginBottom: '8px' }}>
-                        <div><strong>Your Answer:</strong> {userAns !== undefined ? q.options[userAns] : 'Not Answered'}</div>
+                      <div style={{ fontSize: '0.84rem', marginBottom: '8px' }}>
+                        <div>
+                          <strong>Your Answer:</strong> {userAns !== undefined ? q.options[userAns] : 'Not Answered'}
+                        </div>
                         {!isCorrect && (
                           <div style={{ color: 'var(--accent-emerald)' }}>
                             <strong>Correct Answer:</strong> {q.options[q.answer]}
                           </div>
                         )}
                       </div>
-
-                      <div style={{
-                        padding: '10px 12px',
-                        background: 'var(--bg-secondary)',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '0.8rem',
-                        color: 'var(--text-secondary)'
-                      }}>
+                      <div style={{ padding: '9px 12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                         <strong style={{ color: 'var(--accent-cyan)' }}>Explanation:</strong> {q.explanation}
                       </div>
                     </div>

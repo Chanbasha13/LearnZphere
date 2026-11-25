@@ -92,12 +92,12 @@ export default function MyCourses() {
                       >
                         <Play size={13} /> Resume
                       </Link>
-                      <Link 
+                      <Link
                         to={`/quiz/${course.id}`}
                         className="btn btn-secondary btn-sm"
                         style={{ fontSize: '0.8rem' }}
                       >
-                        Exam
+                        {quizScore ? `Exam: ${quizScore.percentage}%` : 'Take Exam'}
                       </Link>
                     </div>
                   </div>

@@ -1,456 +1,423 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { 
-  ShieldAlert, 
-  Users, 
-  BookOpen, 
-  TrendingUp, 
-  PlusCircle, 
-  Trash2, 
-  Eye, 
-  CheckCircle2, 
-  X, 
-  Search, 
-  ShieldCheck, 
-  Download, 
-  RefreshCcw,
-  Layers,
-  GraduationCap
+import {
+  Shield,
+  Users,
+  BookOpen,
+  Building2,
+  Plus,
+  Trash2,
+  Search,
+  Download,
+  X,
+  BarChart3,
+  UserPlus,
+  ExternalLink
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useCourses } from '../context/CourseContext';
 import { DEPARTMENTS } from '../data/departmentsData';
+import { formatTimeAgo } from '../utils/helpers';
 
 export default function AdminDashboard() {
-  const { user, allUsers, removeUserAccount, changeUserRole } = useAuth();
-  const { courses, createCourse, removeCourse } = useCourses();
+  const { user, allUsers, removeUserAccount, changeUserRole, createUserAccount } = useAuth();
+  const { courses, createCourse, removeCourse, studentStates, assignments, announcements, activityLog } = useCourses();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTabParam = searchParams.get('tab') || 'courses';
-  const [activeTab, setActiveTab] = useState(activeTabParam);
+  const activeTab = searchParams.get('tab') || 'courses';
+  const setActiveTab = (tab) => setSearchParams(tab === 'courses' ? {} : { tab });
 
-  // User search & filter state
   const [userSearch, setUserSearch] = useState('');
-  const [userRoleFilter, setUserRoleFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
 
-  // Create Course Modal State
-  const [modalOpen, setModalOpen] = useState(false);
-  const [newCourse, setNewCourse] = useState({
+  const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
+  const [courseForm, setCourseForm] = useState({
     title: '',
-    departmentId: 'programming',
+    instructor: 'Dr. Elena Vance',
+    departmentId: 'computer-science',
     difficulty: 'Intermediate',
     duration: '8 weeks',
     description: '',
-    badge: 'University Accredited'
+    badge: 'Senate Accredited'
   });
-  const [alertMsg, setAlertMsg] = useState('');
 
-  const studentsCount = allUsers.filter(u => u.role === 'student').length;
-  const instructorsCount = allUsers.filter(u => u.role === 'instructor').length;
-  const adminsCount = allUsers.filter(u => u.role === 'admin').length;
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    role: 'student',
+    department: DEPARTMENTS[0].name,
+    password: 'password123'
+  });
+  const [adminStatus, setAdminStatus] = useState('');
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setSearchParams({ tab });
-  };
+  useEffect(() => {
+    if (!adminStatus) return undefined;
+    const t = setTimeout(() => setAdminStatus(''), 3500);
+    return () => clearTimeout(t);
+  }, [adminStatus]);
 
   const handleCreateCourse = (e) => {
     e.preventDefault();
-    if (!newCourse.title.trim() || !newCourse.description.trim()) return;
-
-    const dept = DEPARTMENTS.find(d => d.id === newCourse.departmentId);
-
-    const created = createCourse({
-      title: newCourse.title.trim(),
-      departmentId: newCourse.departmentId,
-      departmentName: dept ? dept.name : 'Computer Science',
-      difficulty: newCourse.difficulty,
-      duration: newCourse.duration,
-      description: newCourse.description.trim(),
-      badge: newCourse.badge,
-      instructor: 'Dr. Sarah Lin',
-      instructorRole: 'Distinguished Systems Architect & Academic Dean',
-      icon: '🏛️',
-      image: '/assets/images/web-dev.svg',
-      whatYouWillLearn: [
-        'Institutional standards and architectural rigor',
-        'Advanced system design and peer-reviewed methodologies',
-        'Academic capstone project delivery'
-      ],
-      prerequisites: ['Admitted LearnSphere Scholar status'],
-      modules: [
-        {
-          id: 'admin-mod-1',
-          title: 'Module 1: Academic Introduction & Foundations',
-          lessons: [
-            { id: `adm-${Date.now()}-1`, title: 'Academic Orientation & Standards', duration: '18:00', videoUrl: 'https://www.youtube.com/embed/qz0aGYrrlhU', completed: false },
-            { id: `adm-${Date.now()}-2`, title: 'Core Implementation Methodologies', duration: '22:00', videoUrl: 'https://www.youtube.com/embed/kUMe1FH4CHE', completed: false }
-          ]
-        }
-      ]
+    if (!courseForm.title.trim()) return;
+    const dept = DEPARTMENTS.find((d) => d.id === courseForm.departmentId) || DEPARTMENTS[0];
+    createCourse({
+      title: courseForm.title.trim(),
+      instructor: courseForm.instructor.trim() || 'KL University Faculty',
+      instructorRole: 'Accredited Faculty Professor',
+      departmentId: dept.id,
+      departmentName: dept.name,
+      difficulty: courseForm.difficulty,
+      duration: courseForm.duration,
+      description: courseForm.description.trim() || `University course under ${dept.name}.`,
+      badge: courseForm.badge
     });
-
-    setAlertMsg(`University Course "${created.title}" successfully instituted by Senate decree!`);
-    setTimeout(() => setAlertMsg(''), 4500);
-    setModalOpen(false);
-    setNewCourse({
+    setCourseForm({
       title: '',
-      departmentId: 'programming',
+      instructor: 'Dr. Elena Vance',
+      departmentId: 'computer-science',
       difficulty: 'Intermediate',
       duration: '8 weeks',
       description: '',
-      badge: 'University Accredited'
+      badge: 'Senate Accredited'
     });
+    setIsAddCourseOpen(false);
+    setAdminStatus('Accredited course published across platform.');
   };
 
-  const handleDeleteCourse = (id, title) => {
-    if (window.confirm(`Admin Decree: Are you sure you want to retire course "${title}" from the University Catalog?`)) {
-      removeCourse(id);
-      setAlertMsg(`Course "${title}" has been retired from the catalog.`);
-      setTimeout(() => setAlertMsg(''), 4000);
+  const handleCreateUser = (e) => {
+    e.preventDefault();
+    if (!userForm.name.trim() || !userForm.email.trim()) return;
+    const res = createUserAccount(userForm);
+    if (res.success) {
+      setUserForm({
+        name: '',
+        email: '',
+        role: 'student',
+        department: DEPARTMENTS[0].name,
+        password: 'password123'
+      });
+      setIsAddUserOpen(false);
+      setAdminStatus(`Provisioned ${res.user.role} account for ${res.user.name}.`);
+    } else {
+      setAdminStatus(res.message);
     }
-  };
-
-  const handleDeleteUser = (userId, name) => {
-    if (userId === user?.id) {
-      alert("Administrative safety check: You cannot delete your own active administrative account.");
-      return;
-    }
-    if (window.confirm(`Revoke Enrollment: Are you sure you want to permanently remove user account "${name}"?`)) {
-      removeUserAccount(userId);
-      setAlertMsg(`User account "${name}" was purged from system records.`);
-      setTimeout(() => setAlertMsg(''), 4000);
-    }
-  };
-
-  const handleChangeRole = (userId, newRole) => {
-    changeUserRole(userId, newRole);
-    setAlertMsg(`User role successfully updated to "${newRole}".`);
-    setTimeout(() => setAlertMsg(''), 3500);
   };
 
   const handleExportBackup = () => {
-    const data = {
-      users: allUsers,
+    const dataSnapshot = {
+      exportedAt: new Date().toISOString(),
+      platform: 'LearnSphere KL University LMS',
+      usersCount: allUsers.length,
       coursesCount: courses.length,
-      exportTimestamp: new Date().toISOString(),
-      governance: 'LearnSphere University Senate'
+      users: allUsers.map(({ password, ...safe }) => safe),
+      courses,
+      studentStates,
+      assignments,
+      announcements,
+      activityLog
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(dataSnapshot, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `learnsphere-system-backup-${Date.now()}.json`;
+    a.download = `learnsphere-klu-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Filter users list
-  const filteredUsers = allUsers.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
-                          u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-                          (u.department && u.department.toLowerCase().includes(userSearch.toLowerCase()));
-    const matchesRole = userRoleFilter === 'all' || u.role === userRoleFilter;
+  const filteredUsers = allUsers.filter((u) => {
+    const matchesSearch =
+      u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+      (u.studentId || '').toLowerCase().includes(userSearch.toLowerCase());
+    const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
+
+  // Real computed reports metrics
+  const reportsMetrics = useMemo(() => {
+    const students = allUsers.filter((u) => u.role === 'student');
+    const instructors = allUsers.filter((u) => u.role === 'instructor');
+    const admins = allUsers.filter((u) => u.role === 'admin');
+    const totalEnrollments = students.reduce((s, stu) => s + (studentStates[stu.id]?.enrolled?.length || 0), 0);
+    const quizList = students.flatMap((stu) => Object.values(studentStates[stu.id]?.quizResults || {}));
+    const passedQuizzes = quizList.filter((q) => q.passed).length;
+    const submittedCount = assignments.filter((a) => a.status === 'Submitted').length;
+    const gradedCount = assignments.filter((a) => a.status === 'Graded').length;
+
+    return {
+      studentsCount: students.length,
+      instructorsCount: instructors.length,
+      adminsCount: admins.length,
+      totalEnrollments,
+      quizAttempts: quizList.length,
+      passedQuizzes,
+      submittedCount,
+      gradedCount
+    };
+  }, [allUsers, studentStates, assignments]);
 
   return (
     <div className="dashboard-layout">
       <Sidebar />
 
       <main className="dashboard-main">
-        {/* Header Greeting */}
         <div className="dashboard-header">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-              <span className="badge badge-rose" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                <ShieldAlert size={12} /> University Senate & Administration
-              </span>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                • Admin ID: {user?.adminId || 'ADM-1001'}
-              </span>
-            </div>
-            <h1 className="welcome-title">
-              University Command Center — {user?.name}
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-              Oversee campus departments, govern student & faculty credentials, and regulate accredited curricula.
+            <span className="badge badge-bronze" style={{ marginBottom: '6px' }}>
+              University Governance Console
+            </span>
+            <h1 className="welcome-title">Platform Administration &amp; Reports</h1>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+              Govern accredited courses, campus block mappings, university roles, and live telemetry records.
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <button 
-              onClick={handleExportBackup}
-              className="btn btn-outline btn-sm"
-              title="Export complete system state as JSON backup"
-            >
-              <Download size={14} /> Export Backup
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button type="button" onClick={handleExportBackup} className="btn btn-outline btn-sm">
+              <Download size={15} /> Export JSON Backup
             </button>
-            <button 
-              onClick={() => setModalOpen(true)}
-              className="btn btn-primary btn-sm"
-            >
-              <PlusCircle size={15} /> Institute New Course
+            <button type="button" onClick={() => setIsAddUserOpen(true)} className="btn btn-secondary btn-sm">
+              <UserPlus size={15} /> Provision User
+            </button>
+            <button type="button" onClick={() => setIsAddCourseOpen(true)} className="btn btn-primary btn-sm">
+              <Plus size={15} /> New Course
             </button>
           </div>
         </div>
 
-        {/* Success Alert Banner */}
-        {alertMsg && (
-          <div style={{
-            padding: '14px 18px',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            borderRadius: 'var(--radius-md)',
-            color: 'var(--accent-emerald)',
-            fontSize: '0.9rem',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <CheckCircle2 size={18} /> {alertMsg}
+        {adminStatus && (
+          <div
+            role="status"
+            style={{
+              padding: '11px 16px',
+              marginBottom: '20px',
+              borderRadius: 'var(--radius-sm)',
+              background: 'rgba(15, 118, 110, 0.1)',
+              border: '1px solid rgba(15, 118, 110, 0.3)',
+              color: 'var(--accent-emerald)',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span>{adminStatus}</span>
+            <button type="button" onClick={() => setAdminStatus('')} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+              <X size={15} />
+            </button>
           </div>
         )}
 
-        {/* Global Administrative Metrics */}
+        {/* Top 4 Governance Stats */}
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(56, 189, 248, 0.15)', color: 'var(--accent-cyan)' }}>
-              <Users size={22} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-num">{studentsCount} Scholars</span>
-              <span className="stat-name">Registered Undergraduates</span>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(245, 158, 11, 0.15)', color: 'var(--accent-amber)' }}>
-              <GraduationCap size={22} />
-            </div>
-            <div className="stat-info">
-              <span className="stat-num">{instructorsCount} Faculty</span>
-              <span className="stat-name">Academic Instructors</span>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.15)', color: 'var(--accent-emerald)' }}>
+            <div className="stat-icon-wrapper" style={{ background: 'rgba(22, 50, 79, 0.1)', color: 'var(--accent-cyan)' }}>
               <BookOpen size={22} />
             </div>
             <div className="stat-info">
-              <span className="stat-num">{courses.length} Programs</span>
-              <span className="stat-name">Accredited Curricula</span>
+              <span className="stat-num">{courses.length}</span>
+              <span className="stat-name">Accredited Courses</span>
             </div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon-wrapper" style={{ background: 'rgba(244, 63, 94, 0.15)', color: 'var(--accent-rose)' }}>
-              <ShieldCheck size={22} />
+            <div className="stat-icon-wrapper" style={{ background: 'rgba(15, 118, 110, 0.1)', color: 'var(--accent-emerald)' }}>
+              <Users size={22} />
             </div>
             <div className="stat-info">
-              <span className="stat-num">Operational</span>
-              <span className="stat-name">System Integrity Status</span>
+              <span className="stat-num">{allUsers.length}</span>
+              <span className="stat-name">Registered Accounts</span>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon-wrapper" style={{ background: 'rgba(154, 91, 37, 0.12)', color: 'var(--accent-bronze)' }}>
+              <Building2 size={22} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-num">{DEPARTMENTS.length}</span>
+              <span className="stat-name">Mapped Academic Blocks</span>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon-wrapper" style={{ background: 'rgba(67, 56, 202, 0.1)', color: 'var(--accent-indigo)' }}>
+              <Shield size={22} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-num">{reportsMetrics.totalEnrollments}</span>
+              <span className="stat-name">Active Cohort Enrollments</span>
             </div>
           </div>
         </div>
 
-        {/* Navigation Tabs */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '12px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => handleTabChange('courses')}
-            className={`btn btn-sm ${activeTab === 'courses' ? 'btn-primary' : 'btn-outline'}`}
-          >
-            <BookOpen size={14} /> Master Course Directory ({courses.length})
-          </button>
-          <button
-            onClick={() => handleTabChange('users')}
-            className={`btn btn-sm ${activeTab === 'users' ? 'btn-primary' : 'btn-outline'}`}
-          >
-            <Users size={14} /> User Governance ({allUsers.length})
-          </button>
-          <button
-            onClick={() => handleTabChange('departments')}
-            className={`btn btn-sm ${activeTab === 'departments' ? 'btn-primary' : 'btn-outline'}`}
-          >
-            <Layers size={14} /> University Departments (6)
-          </button>
+        {/* Tab Strip */}
+        <div className="dash-tabs-bar" role="tablist">
+          {[
+            { id: 'courses', label: `Course Governance (${courses.length})`, icon: <BookOpen size={15} /> },
+            { id: 'users', label: `User Management (${allUsers.length})`, icon: <Users size={15} /> },
+            { id: 'departments', label: 'Campus Mapping', icon: <Building2 size={15} /> },
+            { id: 'reports', label: 'Activity & Reports', icon: <BarChart3 size={15} /> }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`btn btn-sm ${activeTab === tab.id ? 'btn-primary' : 'btn-outline'}`}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* TAB 1: Master Course Directory */}
+        {/* TAB 1: COURSES GOVERNANCE */}
         {activeTab === 'courses' && (
-          <div>
-            <div className="section-title-row">
-              <div>
-                <h2 style={{ fontSize: '1.35rem' }}>University Curricula Management</h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  Accredited degrees across all 6 departments. Admins have authority to institute or retire courses.
-                </p>
-              </div>
-            </div>
-
-            <div className="data-table-container">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Curriculum Title</th>
-                    <th>Department</th>
-                    <th>Level</th>
-                    <th>Faculty Lead</th>
-                    <th>Rating</th>
-                    <th style={{ textAlign: 'right' }}>Governance</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {courses.map(course => (
+          <div className="data-table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Course Title</th>
+                  <th>Faculty Unit</th>
+                  <th>Lead Instructor</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courses.map((course) => {
+                  const isCustom = Number(course.id) > 10;
+                  return (
                     <tr key={course.id}>
+                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        #{course.id}
+                      </td>
                       <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <img 
-                            src={course.image} 
-                            alt="" 
-                            style={{ width: '32px', height: '32px', objectFit: 'contain' }} 
-                          />
-                          <div>
-                            <div style={{ fontWeight: 700 }}>{course.title}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{course.duration}</div>
-                          </div>
+                        <div style={{ fontWeight: 700 }}>{course.title}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {course.duration} • {course.difficulty}
                         </div>
                       </td>
                       <td>
-                        <span className="badge badge-cyan" style={{ fontSize: '0.72rem' }}>
-                          {course.departmentName}
+                        <span className="badge badge-cyan">{course.departmentName}</span>
+                      </td>
+                      <td>{course.instructor}</td>
+                      <td>
+                        <span className={`badge ${isCustom ? 'badge-amber' : 'badge-emerald'}`}>
+                          {isCustom ? 'Faculty Added' : 'Core Curriculum'}
                         </span>
                       </td>
-                      <td>{course.difficulty}</td>
-                      <td>{course.instructor}</td>
-                      <td>★ {course.rating}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '8px' }}>
-                          <Link 
-                            to={`/course/${course.id}`} 
-                            className="btn btn-outline btn-sm"
-                            style={{ padding: '4px 10px', fontSize: '0.78rem' }}
-                            title="Inspect Syllabus"
-                          >
-                            <Eye size={13} /> View
+                      <td>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <Link to={`/course/${course.id}`} className="btn btn-outline btn-sm">
+                            <ExternalLink size={13} /> View
                           </Link>
-                          <button 
-                            onClick={() => handleDeleteCourse(course.id, course.title)}
-                            className="btn btn-danger btn-sm"
-                            style={{ padding: '4px 10px', fontSize: '0.78rem' }}
-                            title="Retire Course from University Catalog"
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {isCustom && (
+                            <button
+                              type="button"
+                              onClick={() => removeCourse(course.id)}
+                              className="btn btn-danger btn-sm"
+                              title="Remove Custom Course"
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* TAB 2: User Accounts & Role Governance */}
+        {/* TAB 2: USERS GOVERNANCE */}
         {activeTab === 'users' && (
           <div>
-            <div className="section-title-row">
-              <div>
-                <h2 style={{ fontSize: '1.35rem' }}>User Accounts & Role Governance</h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  Manage credentials, assign student/faculty/admin permissions, and maintain identity security.
-                </p>
-              </div>
-            </div>
-
-            {/* Filter toolbar */}
-            <div className="glass-panel" style={{ padding: '16px', marginBottom: '20px', display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input 
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ position: 'relative', flex: '1 1 260px', maxWidth: '340px' }}>
+                <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
                   type="text"
                   className="form-input"
-                  placeholder="Search user by name, email, department..."
+                  style={{ paddingLeft: '36px', fontSize: '0.85rem' }}
+                  placeholder="Search user name, ID or email..."
                   value={userSearch}
-                  onChange={e => setUserSearch(e.target.value)}
-                  style={{ paddingLeft: '38px', paddingRight: '12px' }}
+                  onChange={(e) => setUserSearch(e.target.value)}
                 />
               </div>
 
-              <select 
-                className="form-select"
-                value={userRoleFilter}
-                onChange={e => setUserRoleFilter(e.target.value)}
-                style={{ width: 'auto', minWidth: '160px' }}
-              >
-                <option value="all">All Roles ({allUsers.length})</option>
-                <option value="student">Students ({studentsCount})</option>
-                <option value="instructor">Instructors ({instructorsCount})</option>
-                <option value="admin">Administrators ({adminsCount})</option>
-              </select>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['all', 'student', 'instructor', 'admin'].map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRoleFilter(r)}
+                    className={`btn btn-sm ${roleFilter === r ? 'btn-primary' : 'btn-outline'}`}
+                    style={{ textTransform: 'capitalize' }}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="data-table-container">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>User Identity</th>
-                    <th>Email Address</th>
-                    <th>Affiliated Department</th>
-                    <th>Assigned Role</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
+                    <th>University Member</th>
+                    <th>Email</th>
+                    <th>Role Permission</th>
+                    <th>Department</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map(u => (
+                  {filteredUsers.map((u) => (
                     <tr key={u.id}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <img 
-                            src={u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'} 
-                            alt="" 
-                            style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
-                          />
+                          <img src={u.avatar} alt={u.name} style={{ width: '34px', height: '34px', borderRadius: '50%' }} />
                           <div>
-                            <div style={{ fontWeight: 700 }}>
-                              {u.name} {u.id === user?.id && <span style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)' }}>(You)</span>}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                              Joined: {u.joinedDate || '2026-09-15'}
-                            </div>
+                            <div style={{ fontWeight: 700 }}>{u.name}</div>
+                            <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{u.studentId}</div>
                           </div>
                         </div>
                       </td>
-                      <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.825rem' }}>{u.email}</td>
-                      <td>{u.department || 'General'}</td>
+                      <td style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>{u.email}</td>
                       <td>
-                        <select 
+                        <select
                           className="form-select"
+                          style={{ padding: '5px 9px', fontSize: '0.8rem', maxWidth: '140px' }}
                           value={u.role}
-                          onChange={(e) => handleChangeRole(u.id, e.target.value)}
-                          style={{ padding: '4px 8px', fontSize: '0.8rem', width: 'auto' }}
+                          aria-label={`Role for ${u.name}`}
+                          onChange={(e) => changeUserRole(u.id, e.target.value)}
                         >
                           <option value="student">Student</option>
                           <option value="instructor">Instructor</option>
                           <option value="admin">Admin</option>
                         </select>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
+                      <td style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{u.department}</td>
+                      <td>
                         {u.id !== user?.id ? (
-                          <button 
-                            onClick={() => handleDeleteUser(u.id, u.name)}
+                          <button
+                            type="button"
+                            onClick={() => removeUserAccount(u.id)}
                             className="btn btn-danger btn-sm"
-                            style={{ padding: '4px 10px', fontSize: '0.78rem' }}
-                            title="Delete User Record"
                           >
                             <Trash2 size={13} /> Delete
                           </button>
                         ) : (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Protected</span>
+                          <span className="badge badge-emerald">Current Session</span>
                         )}
                       </td>
                     </tr>
@@ -461,165 +428,180 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB 3: University Departments */}
+        {/* TAB 3: CAMPUS BLOCK & DEPARTMENT MAPPING */}
         {activeTab === 'departments' && (
-          <div>
-            <div className="section-title-row">
-              <div>
-                <h2 style={{ fontSize: '1.35rem' }}>Academic Departments Allocation</h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  Governance of the 6 specialized campus towers, appointed deans, and computational research labs.
-                </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '18px' }}>
+            {DEPARTMENTS.map((dept) => {
+              const deptCourses = courses.filter((c) => c.departmentId === dept.id);
+              return (
+                <div key={dept.id} className="glass-panel" style={{ padding: '22px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span className="badge badge-bronze">{dept.code}</span>
+                    <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                      X:{dept.coordinates.x}m, Z:{dept.coordinates.z}m
+                    </span>
+                  </div>
+                  <h3 style={{ fontSize: '1.08rem', marginBottom: '4px' }}>{dept.name}</h3>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--accent-cyan)', fontWeight: 600, marginBottom: '10px' }}>
+                    {dept.buildingName} • {dept.dean}
+                  </div>
+                  <p style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>{dept.tagline}</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--border-subtle)' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>{deptCourses.length} Modules Linked</span>
+                    <Link to={`/?building=${dept.kluBuildingId}`} className="btn btn-outline btn-sm">
+                      Inspect in 3D Twin
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* TAB 4: PLATFORM ACTIVITY & ANALYTICS REPORTS */}
+        {activeTab === 'reports' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+              <div className="glass-panel" style={{ padding: '18px' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Role Distribution</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '6px' }}>
+                  {reportsMetrics.studentsCount} Students • {reportsMetrics.instructorsCount} Faculty • {reportsMetrics.adminsCount} Admins
+                </div>
+              </div>
+              <div className="glass-panel" style={{ padding: '18px' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Assessment Certification</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '6px' }}>
+                  {reportsMetrics.passedQuizzes} Passed / {reportsMetrics.quizAttempts} Attempts
+                </div>
+              </div>
+              <div className="glass-panel" style={{ padding: '18px' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Coursework Grading Queue</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: '6px' }}>
+                  {reportsMetrics.submittedCount} Awaiting • {reportsMetrics.gradedCount} Graded
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-              {DEPARTMENTS.map(dept => (
-                <div key={dept.id} className="glass-panel" style={{ padding: '24px', borderTop: `4px solid ${dept.accentColor}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span className="badge" style={{ background: dept.accentGlow, color: dept.accentColor, borderColor: dept.accentColor }}>
-                      {dept.code}
+            <div className="glass-panel" style={{ padding: '24px' }}>
+              <h3 style={{ fontSize: '1.12rem', marginBottom: '14px' }}>Live Platform Activity Audit Log</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
+                {activityLog.map((act) => (
+                  <div
+                    key={act.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '11px 14px',
+                      background: 'var(--bg-secondary)',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border-subtle)',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>{act.targetTitle}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                        {act.actorName} ({act.actorRole}) — {act.detail}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      {formatTimeAgo(act.timestamp)}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{dept.landmark}</span>
                   </div>
-
-                  <h3 style={{ fontSize: '1.2rem', marginBottom: '6px' }}>{dept.name}</h3>
-                  <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                    <strong>Dean:</strong> {dept.dean}
-                  </div>
-
-                  <div className="dept-stats-grid" style={{ marginBottom: '16px' }}>
-                    <div className="dept-stat-box">
-                      <div className="dept-stat-value" style={{ fontSize: '1.1rem', color: dept.accentColor }}>
-                        {dept.stats.activeStudents}+
-                      </div>
-                      <div className="dept-stat-label">Scholars</div>
-                    </div>
-                    <div className="dept-stat-box">
-                      <div className="dept-stat-value" style={{ fontSize: '1.1rem' }}>
-                        {dept.stats.coursesCount}
-                      </div>
-                      <div className="dept-stat-label">Programs</div>
-                    </div>
-                    <div className="dept-stat-box">
-                      <div className="dept-stat-value" style={{ fontSize: '1.1rem' }}>
-                        {dept.stats.researchLabs}
-                      </div>
-                      <div className="dept-stat-label">Labs</div>
-                    </div>
-                    <div className="dept-stat-box">
-                      <div className="dept-stat-value" style={{ fontSize: '1.1rem', color: 'var(--accent-emerald)' }}>
-                        {dept.stats.placementRate}
-                      </div>
-                      <div className="dept-stat-label">Placement</div>
-                    </div>
-                  </div>
-
-                  <Link to={`/courses?department=${dept.id}`} className="btn btn-outline btn-sm" style={{ width: '100%', fontSize: '0.8rem' }}>
-                    Inspect Department Curricula
-                  </Link>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Modal: Institute New Course */}
-        {modalOpen && (
-          <div className="dept-modal-backdrop" onClick={() => setModalOpen(false)}>
-            <div className="dept-modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '620px' }}>
-              <div className="dept-modal-header">
-                <div>
-                  <span className="badge badge-rose" style={{ marginBottom: '6px' }}>Senate Accreditation</span>
-                  <h2 style={{ fontSize: '1.4rem' }}>Institute New University Course</h2>
-                </div>
-                <button 
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setModalOpen(false)}
-                  style={{ borderRadius: '50%', width: '34px', height: '34px', padding: 0 }}
-                >
-                  <X size={16} />
+        {/* Modal: Create Course */}
+        {isAddCourseOpen && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
+            <div className="glass-panel" style={{ width: '100%', maxWidth: '500px', padding: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                <h2 style={{ fontSize: '1.25rem' }}>Commission Accredited Course</h2>
+                <button type="button" onClick={() => setIsAddCourseOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <X size={20} />
                 </button>
               </div>
-
               <form onSubmit={handleCreateCourse}>
-                <div className="dept-modal-body">
+                <div className="form-group">
+                  <label className="form-label">Course Title *</label>
+                  <input type="text" className="form-input" placeholder="e.g. Quantum Algorithms II" value={courseForm.title} onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Department</label>
+                  <select className="form-select" value={courseForm.departmentId} onChange={(e) => setCourseForm({ ...courseForm, departmentId: e.target.value })}>
+                    {DEPARTMENTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div className="form-group">
-                    <label className="form-label">Degree Curriculum Title</label>
-                    <input 
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. Distributed Quantum Cryptography & Protocols"
-                      value={newCourse.title}
-                      onChange={e => setNewCourse({ ...newCourse, title: e.target.value })}
-                      required
-                    />
+                    <label className="form-label">Lead Faculty</label>
+                    <input type="text" className="form-input" value={courseForm.instructor} onChange={(e) => setCourseForm({ ...courseForm, instructor: e.target.value })} />
                   </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div className="form-group">
-                      <label className="form-label">Governing Department</label>
-                      <select 
-                        className="form-select"
-                        value={newCourse.departmentId}
-                        onChange={e => setNewCourse({ ...newCourse, departmentId: e.target.value })}
-                      >
-                        {DEPARTMENTS.map(d => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Rigor Tier</label>
-                      <select 
-                        className="form-select"
-                        value={newCourse.difficulty}
-                        onChange={e => setNewCourse({ ...newCourse, difficulty: e.target.value })}
-                      >
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced (Graduate Level)</option>
-                      </select>
-                    </div>
-                  </div>
-
                   <div className="form-group">
-                    <label className="form-label">Duration & Term</label>
-                    <input 
-                      type="text"
-                      className="form-input"
-                      placeholder="e.g. 10 weeks"
-                      value={newCourse.duration}
-                      onChange={e => setNewCourse({ ...newCourse, duration: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">Academic Syllabus Overview</label>
-                    <textarea 
-                      className="form-textarea"
-                      rows={4}
-                      placeholder="Specify the learning objectives, laboratory criteria, and research outcomes..."
-                      value={newCourse.description}
-                      onChange={e => setNewCourse({ ...newCourse, description: e.target.value })}
-                      required
-                    ></textarea>
+                    <label className="form-label">Duration</label>
+                    <input type="text" className="form-input" value={courseForm.duration} onChange={(e) => setCourseForm({ ...courseForm, duration: e.target.value })} />
                   </div>
                 </div>
+                <div className="form-group">
+                  <label className="form-label">Description</label>
+                  <textarea rows="3" className="form-textarea" value={courseForm.description} onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })} placeholder="Syllabus scope..." />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button type="button" onClick={() => setIsAddCourseOpen(false)} className="btn btn-outline btn-sm">Cancel</button>
+                  <button type="submit" className="btn btn-primary btn-sm">Publish Course</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
-                <div className="dept-modal-footer">
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => setModalOpen(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary btn-sm">
-                    <PlusCircle size={15} /> Pass Accreditation Decree
-                  </button>
+        {/* Modal: Provision User Account */}
+        {isAddUserOpen && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', zIndex: 1000 }}>
+            <div className="glass-panel" style={{ width: '100%', maxWidth: '480px', padding: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                <h2 style={{ fontSize: '1.25rem' }}>Provision University Account</h2>
+                <button type="button" onClick={() => setIsAddUserOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleCreateUser}>
+                <div className="form-group">
+                  <label className="form-label">Full Name *</label>
+                  <input type="text" className="form-input" value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">University Email *</label>
+                  <input type="email" className="form-input" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} required />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Role</label>
+                    <select className="form-select" value={userForm.role} onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}>
+                      <option value="student">Student</option>
+                      <option value="instructor">Instructor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Department</label>
+                    <select className="form-select" value={userForm.department} onChange={(e) => setUserForm({ ...userForm, department: e.target.value })}>
+                      {DEPARTMENTS.map((d) => <option key={d.id} value={d.name}>{d.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Initial Password</label>
+                  <input type="text" className="form-input" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} required />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button type="button" onClick={() => setIsAddUserOpen(false)} className="btn btn-outline btn-sm">Cancel</button>
+                  <button type="submit" className="btn btn-primary btn-sm">Create Account</button>
                 </div>
               </form>
             </div>
@@ -629,4 +611,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

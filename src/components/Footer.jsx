@@ -1,120 +1,187 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Terminal, ShieldCheck, Heart } from 'lucide-react';
-import { DEPARTMENTS } from '../data/departmentsData';
+import { Building2, Compass, Mail, MapPin, BookOpen } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function Footer() {
+  const { isAuthenticated, role } = useAuth();
+  const portalPath =
+    role === 'admin'
+      ? '/admin-dashboard'
+      : role === 'instructor'
+      ? '/instructor-dashboard'
+      : '/student-dashboard';
+
   return (
-    <footer style={{
-      background: 'var(--bg-secondary)',
-      borderTop: '1px solid var(--border-subtle)',
-      padding: '60px 24px 30px',
-      marginTop: 'auto'
-    }}>
+    <footer
+      style={{
+        background: 'var(--bg-elevated)',
+        borderTop: '1px solid var(--border-subtle)',
+        padding: '52px 0 28px',
+        marginTop: 'auto'
+      }}
+    >
       <div className="container">
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '40px',
-          marginBottom: '50px'
-        }}>
-          {/* Brand Col */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '32px',
+            marginBottom: '40px'
+          }}
+        >
+          {/* University Brand Info */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#07090e'
-              }}>
-                <Sparkles size={18} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '8px',
+                  background: 'var(--accent-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--btn-primary-text)'
+                }}
+              >
+                <Building2 size={17} />
               </div>
-              <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>
-                Learn<span style={{ color: 'var(--accent-cyan)' }}>Sphere</span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                  LearnSphere
+                </div>
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--accent-bronze)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  KL University (KLEF)
+                </div>
+              </div>
+            </div>
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '14px' }}>
+              Integrated digital university platform connecting courseware, faculty assessments, and credentials with the Vaddeswaram 3D campus twin.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <MapPin size={13} /> Green Fields, Vaddeswaram, AP 522302
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Mail size={13} /> academic-support@learnsphere.edu
               </span>
             </div>
-            <p style={{ fontSize: '0.875rem', lineHeight: '1.6', marginBottom: '16px' }}>
-              An immersive 3D digital university campus and interactive Learning Management System built for next-generation academic exploration.
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--accent-emerald)' }}>
-              <ShieldCheck size={14} /> Academic Demo Verified • LocalStorage Active
-            </div>
           </div>
 
-          {/* Departments Col */}
+          {/* Academic Faculties */}
           <div>
-            <h4 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-primary)', marginBottom: '16px' }}>
-              University Departments
+            <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '14px', color: 'var(--text-primary)' }}>
+              Campus Faculties
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              {DEPARTMENTS.map(d => (
-                <Link key={d.id} to={`/courses?department=${d.id}`} style={{ transition: 'color 0.2s ease' }}>
-                  {d.name}
-                </Link>
-              ))}
-            </div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '9px', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+              <li>
+                <Link to="/courses?department=computer-science">Computer Science &amp; Engineering (C Block)</Link>
+              </li>
+              <li>
+                <Link to="/courses?department=artificial-intelligence">AI &amp; Knowledge Systems (SKC)</Link>
+              </li>
+              <li>
+                <Link to="/courses?department=business">Business &amp; Skill Centre (SDC)</Link>
+              </li>
+              <li>
+                <Link to="/courses?department=research-innovation">R&amp;D Block Innovation Labs</Link>
+              </li>
+              <li>
+                <Link to="/courses?department=digital-library">Central Library &amp; Archives (L-Block)</Link>
+              </li>
+            </ul>
           </div>
 
-          {/* Quick Academic Portals */}
+          {/* University Portal Links */}
           <div>
-            <h4 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-primary)', marginBottom: '16px' }}>
-              Student & Faculty Hubs
+            <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '14px', color: 'var(--text-primary)' }}>
+              Learning Portal
             </h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <Link to="/courses">Academic Course Catalog</Link>
-              <Link to="/student-dashboard">Student Virtual Pod</Link>
-              <Link to="/instructor-dashboard">Faculty Command Center</Link>
-              <Link to="/admin-dashboard">Senate Administration</Link>
-              <Link to="/assignments">Course Assignments</Link>
-              <Link to="/certificates">Certificate Verification</Link>
-            </div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '9px', fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+              <li>
+                <Link to="/">Campus Homepage</Link>
+              </li>
+              <li>
+                <Link to="/courses">Course Catalog</Link>
+              </li>
+              {isAuthenticated ? (
+                <>
+                  <li>
+                    <Link to={portalPath}>My Role Dashboard</Link>
+                  </li>
+                  <li>
+                    <Link to="/profile">Account Profile</Link>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link to="/login">University Sign In</Link>
+                  </li>
+                  <li>
+                    <Link to="/signup">Create Scholar Account</Link>
+                  </li>
+                </>
+              )}
+            </ul>
           </div>
 
-          {/* Tech Stack for Viva */}
+          {/* Platform Overview */}
           <div>
-            <h4 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-primary)', marginBottom: '16px' }}>
-              Viva Project Specs
+            <h4 style={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '14px', color: 'var(--text-primary)' }}>
+              Academic Infrastructure
             </h4>
-            <div style={{
-              background: 'var(--bg-tertiary)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '14px',
-              fontSize: '0.8rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px'
-            }}>
-              <div><strong style={{ color: 'var(--accent-cyan)' }}>Framework:</strong> React.js 18 + Vite 5</div>
-              <div><strong style={{ color: 'var(--accent-cyan)' }}>3D Engine:</strong> CSS3 3D Transforms + Three.js</div>
-              <div><strong style={{ color: 'var(--accent-cyan)' }}>Audio:</strong> Web Audio API Synthesizer</div>
-              <div><strong style={{ color: 'var(--accent-cyan)' }}>Storage:</strong> LocalStorage Browser Persistence</div>
+            <div
+              style={{
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                padding: '16px',
+                fontSize: '0.82rem',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', fontWeight: 700 }}>
+                <Compass size={15} style={{ color: 'var(--accent-bronze)' }} /> KLU Digital Twin + LMS
+              </div>
+              <div>Interactive WebGL 3D campus tour linked with department syllabi, classroom modules, and verified faculty exams.</div>
+              <Link
+                to="/courses"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: 'var(--accent-cyan)',
+                  fontWeight: 700,
+                  marginTop: '4px'
+                }}
+              >
+                <BookOpen size={14} /> Browse Accredited Courses
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div style={{
-          borderTop: '1px solid var(--border-subtle)',
-          paddingTop: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-          fontSize: '0.8rem',
-          color: 'var(--text-muted)'
-        }}>
-          <div>
-            © {new Date().getFullYear()} LearnSphere LMS. Designed for Academic Evaluation & Presentation.
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            Built with React, HTML5, CSS3 3D & JavaScript
-          </div>
+        {/* Bottom Copyright Bar */}
+        <div
+          style={{
+            borderTop: '1px solid var(--border-subtle)',
+            paddingTop: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+            fontSize: '0.8rem',
+            color: 'var(--text-muted)'
+          }}
+        >
+          <span>© {new Date().getFullYear()} LearnSphere • KL University Digital Twin &amp; Academic LMS</span>
+          <span>Vaddeswaram Campus • Role-Based Academic Environment</span>
         </div>
       </div>
     </footer>
